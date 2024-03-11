@@ -1,4 +1,5 @@
 What does it do?
+
     specify:
         which directory to backup
         where to back it up to
@@ -8,6 +9,7 @@ What does it do?
     doas the update
     
 Options:
+
     Standard backup => just hit y
     cnb"    =>     create new backup: copys a folder to specified backup location and creates a HashMap
     bse    =>     backup something else: you can tell where to find the HashMap and backupfolder.
