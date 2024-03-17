@@ -142,15 +142,17 @@ if __name__ == "__main__":
             if wtd == "cnb":
                 wbackupF = input("wehre do you want to have your backup.json located? Input absolut path: you HAVE to call the file backup.json")
                 wbackupD = input("what directory do you want to backup. Input absolut path: ")
+                dst = input("where to save the backup. Input absolut path: ")
                 again = False
             if wtd == "bse":
                 wbackupF = input("wehre is your backup.json located. Input absolut path: ")
                 wbackupD = input("what directory doas this backup refer to? Input absolut path: ")
+                dst = input("where to save the backup. Input absolut path: ")
                 again = False
             if wtd == "inj":
                 wbackupF = input("wehre do you want to have your backup.json located? Input absolut path: ")         # /run/media/yourbackupdevice/backup.json
-                wbackupD = input("wehre is your backup directory located. Input absolut path: ")                    # /run/media/YOURBACKUPDEVICE/Documents
-                wdotbrt  = input("give to path to where this backup.json used to copy its files from: ")             # /home/lhl/Documents
+                wbackupD = input("give to path to where this backup.json used to copy its files from:")                    # /run/media/YOURBACKUPDEVICE/Documents
+                dst  = input("wehre is your backup directory located. Input absolut path: ")             # /home/lhl/Documents
                 again = False
             if wtd == "settings":
                 enable_dubblecheck = input("do you want to enable doublecheck [y/N]: ")
@@ -166,14 +168,15 @@ if __name__ == "__main__":
         nm = os.path.basename(wbackupD)                         # extracts Directory to backup 
         nm = "/"+nm                                             # adds / to Directory name
         nm = wbackupD.replace(nm, "")                           # rewrites path to backup directory with path to main directory in order to compare
-        #nnm = wbackupF.replace("backup.json", "test.json")      # creates new path to backup.json file
+        #nnm = wbackupF.replace("backup.json", "test.json")     # creates new path to backup.json file
         m = list2(wbackupD, dst, nm, "c")                       # (dirto backup), (pathto replace), (path to replace psth with), c replace
-        with open(wbackupF, "w") as f:                               # writes dictionary to json file
+        with open(wbackupF, "w") as f:                          # writes dictionary to json file
             json.dump(m[0], f)                                  # t[0] scips the first [] and writes to to the above defined json file
         with open(wbackupF, "r") as m:
             old = json.load(m)
     else:
-        if os.path.isfile(wbackupF):                                # überprüft ob es bereits eine backupdatei gibt
+        if os.path.isfile(wbackupF):                                    # überprüft ob es bereits eine backupdatei gibt
+            #print("fdsaasdf")
             nn = wbackupF.replace("backup.json", "oldbackup.json")      # replaces wbackupF with new file name
             os.rename(wbackupF, nn)                                     # renames backup.json to oldbackup.json
             with open(nn, 'r') as file1:                                # opens oldbackup.json
@@ -197,7 +200,7 @@ if __name__ == "__main__":
 
 #== used if currentstate of backup directory has changed relative to its backup.json file
     if wtd == "inj":                                        # überprüft ob option "inj" gesetzt wurde
-        m = list2(wbackupD, wbackupD, wdotbrt, "c")         # (dirto backup), (pathto replace), (path to replace psth with), c replace
+        m = list2(dst, dst, wbackupD, "c")             # (dirto backup), (pathto replace), (path to replace psth with), c replace
         with open(wbackupF, "w") as f:                      # writes dictionary to json file
             json.dump(m[0], f)                              # t[0] scips the first [] and writes to to the above defined json file
 
@@ -213,15 +216,15 @@ if __name__ == "__main__":
         print("comparing backup.json for deleted files and folders")
         inst = find_diff(old, new, dst, "d")                # compares .json for old files, and writs them along with update instructions in list
         print("updating backup")                            # user
-        faildo = update(inst)                               # calls function to delete files
-        if not faildo:
-            if doubblecheck:
-                nm = os.path.basename(wbackupD)
+        faildo = update(inst)                               # calls function to dpdate files on backup location returns a list containing files and folders which couldent be updated due to naming issues
+        if not faildo:                                      # if faildo list is empty (all files have been updated)
+            if doubblecheck:                                # if setting doubbleckeck
+                nm = os.path.basename(wbackupD) 
                 nm = "/"+nm
                 nm = wbackupD.replace(nm, "")
                 nnm = wbackupF.replace("backup.json", "test.json")
-                m = list2(wbackupD, dst, nm, "c")         # (dirto backup), (pathto replace), (path to replace psth with), c replace
-                with open(nnm, "w") as f:                      # writes dictionary to json file
+                m = list2(wbackupD, dst, nm, "c")                   # (dirto backup), (pathto replace), (path to replace psth with), c replace
+                with open(nnm, "w") as f:                           # writes dictionary to json file
                     json.dump(m[0], f)                              # t[0] scips the first [] and writes to to the above defined json file
                 with open(nnm, "r") as m:
                     test = json.load(m)
@@ -233,10 +236,18 @@ if __name__ == "__main__":
                     print("it apears that some files, have not been copyed")
                     print("list of missing Files: ")
                     print(val)
-            else:
+            else:                                                   # this will be executed if all goes well
                 print("backup sucessful")
-        else:
-            print("backup faild! please rename the below listed files and backup again")
-            os.remove(wbackupF)
-            os.rename(nn, wbackupF)
-            print(faildo)
+        else:                                                       # if faildo is not empty (some files couldent be updated)
+            print("backup partialy faild!")
+            print("generating backup.json for" +dst)
+            os.remove(wbackupF)                                     # delets .json file for update
+            dst+= "/"+os.path.basename(wbackupD)                    # creates path to backup directory
+            print("igot here")
+            mw = list2(dst, dst, wbackupD, "c")                     # (dir_to backup), (path_to replace), (path_to replace path with), c replace
+            with open(wbackupF, "w") as f:                          # writes dictionary to json file
+                json.dump(mw[0], f)
+            
+            print("backup failed due to files noit being named proporly")
+            print(faildo)                                           # print files which couldent be copied
+            print("rename them and run the backup again")
